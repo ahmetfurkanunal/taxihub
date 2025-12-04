@@ -1,0 +1,12 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Sürücü kayıtlarını yöneten ve yakın sürücüleri bulan TaxiHub Driver Service.",
+        "title": "TaxiHub Driver Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {}
+}

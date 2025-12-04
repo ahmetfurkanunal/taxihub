@@ -1,0 +1,10 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Sürücü kayıtlarını yöneten ve yakın sürücüleri bulan TaxiHub Driver
+    Service.
+  title: TaxiHub Driver Service API
+  version: "1.0"
+paths: {}
+swagger: "2.0"
