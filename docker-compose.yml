@@ -8,7 +8,7 @@ services:
       - mongo_data:/data/db
 
   driver-service:
-    build: ./taxihub
+    build: .
     container_name: driver-service
     depends_on:
       - mongo
