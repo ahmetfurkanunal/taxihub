@@ -21,6 +21,19 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// HealthCheck godoc
+// @Summary     Health check
+// @Description Servisin ayakta olup olmadığını kontrol eder
+// @Tags        Health
+// @Produce     json
+// @Success     200 {object} map[string]string
+// @Router      /health [get]
+func HealthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
 func main() {
 
 	mongoURI := os.Getenv("MONGO_URI")
@@ -45,11 +58,7 @@ func main() {
 
 	docs.SwaggerInfo.BasePath = "/"
 
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	router.GET("/health", HealthCheck)
 
 	driverRepo := driver.NewRepository(client)
 	driverService := driver.NewService(driverRepo)

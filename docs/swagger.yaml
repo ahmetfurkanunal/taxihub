@@ -1,4 +1,84 @@
 basePath: /
+definitions:
+  driver.CreateDriverRequest:
+    properties:
+      carBrand:
+        type: string
+      carModel:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      lat:
+        type: number
+      lon:
+        type: number
+      plate:
+        type: string
+      taksiType:
+        type: string
+    type: object
+  driver.Driver:
+    properties:
+      carBrand:
+        type: string
+      carModel:
+        type: string
+      createdAt:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      location:
+        $ref: '#/definitions/driver.Location'
+      plate:
+        type: string
+      taksiType:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  driver.Location:
+    properties:
+      lat:
+        type: number
+      lon:
+        type: number
+    type: object
+  driver.NearbyDriver:
+    properties:
+      distanceKm:
+        type: number
+      firstName:
+        type: string
+      lastName:
+        type: string
+      plate:
+        type: string
+    type: object
+  driver.UpdateDriverRequest:
+    properties:
+      carBrand:
+        type: string
+      carModel:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      lat:
+        type: number
+      lon:
+        type: number
+      plate:
+        type: string
+      taksiType:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -6,5 +86,168 @@ info:
     Service.
   title: TaxiHub Driver Service API
   version: "1.0"
-paths: {}
+paths:
+  /drivers:
+    get:
+      description: Sistemdeki driver’ları listeler
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/driver.Driver'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Driver listesi
+      tags:
+      - Drivers
+    post:
+      consumes:
+      - application/json
+      description: Yeni bir driver kaydı oluşturur
+      parameters:
+      - description: Driver info
+        in: body
+        name: driver
+        required: true
+        schema:
+          $ref: '#/definitions/driver.CreateDriverRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Driver oluştur
+      tags:
+      - Drivers
+  /drivers/{id}:
+    put:
+      consumes:
+      - application/json
+      description: ID ile driver bilgisini günceller
+      parameters:
+      - description: Driver ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Driver info
+        in: body
+        name: driver
+        required: true
+        schema:
+          $ref: '#/definitions/driver.UpdateDriverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Driver güncelle
+      tags:
+      - Drivers
+  /drivers/nearby:
+    get:
+      description: Girilen konuma 6 km yarıçapındaki taksileri listeler
+      parameters:
+      - description: Latitude
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude
+        in: query
+        name: lon
+        required: true
+        type: number
+      - description: Taxi type
+        in: query
+        name: taksiType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/driver.NearbyDriver'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Yakındaki taksiler
+      tags:
+      - Drivers
+  /health:
+    get:
+      description: Servisin ayakta olup olmadığını kontrol eder
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - Health
 swagger: "2.0"
