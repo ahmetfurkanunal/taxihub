@@ -1,0 +1,29 @@
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  driver-service:
+    build: ./taxihub
+    container_name: driver-service
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+    ports:
+      - "8080:8080"
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    depends_on:
+      - driver-service
+    ports:
+      - "8000:80"
+
+volumes:
+  mongo_data:
