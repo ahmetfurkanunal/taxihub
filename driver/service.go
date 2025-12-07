@@ -15,12 +15,18 @@ type Service struct {
 }
 
 func NewService(repo *Repository) *Service {
-	return &Service{Repo: repo}
+	return &Service{
+		Repo: repo,
+	}
 }
 
 func (s *Service) CreateDriver(ctx context.Context, req CreateDriverRequest) (primitive.ObjectID, error) {
-	if req.FirstName == "" || req.LastName == "" || req.Plate == "" {
-		return primitive.NilObjectID, errors.New("firstName, lastName ve plate zorunludur")
+	if req.FirstName == "" || req.LastName == "" {
+		return primitive.NilObjectID, errors.New("first name and last name are required")
+	}
+
+	if req.Plate == "" {
+		return primitive.NilObjectID, errors.New("plate number is required")
 	}
 
 	now := time.Now()
@@ -45,12 +51,16 @@ func (s *Service) CreateDriver(ctx context.Context, req CreateDriverRequest) (pr
 }
 
 func (s *Service) UpdateDriver(ctx context.Context, id string, req UpdateDriverRequest) error {
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return errors.New("geçersiz id formatı")
+	if id == "" {
+		return errors.New("driver id is required")
 	}
 
-	updated := Driver{
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid driver id format")
+	}
+
+	updatedDriver := Driver{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Plate:     req.Plate,
@@ -64,7 +74,20 @@ func (s *Service) UpdateDriver(ctx context.Context, id string, req UpdateDriverR
 		UpdatedAt: time.Now(),
 	}
 
-	return s.Repo.Update(ctx, objID, updated)
+	return s.Repo.Update(ctx, objID, updatedDriver)
+}
+
+func (s *Service) DeleteDriver(ctx context.Context, id string) error {
+	if id == "" {
+		return errors.New("driver id is required")
+	}
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid driver id format")
+	}
+
+	return s.Repo.DeleteByID(ctx, objID)
 }
 
 func (s *Service) ListDrivers(ctx context.Context) ([]Driver, error) {
@@ -79,34 +102,39 @@ type NearbyDriver struct {
 }
 
 func (s *Service) FindNearbyDrivers(ctx context.Context, lat, lon float64, taxiType string) ([]NearbyDriver, error) {
-	all, err := s.Repo.List(ctx)
+	allDrivers, err := s.Repo.List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	const radiusKm = 6.0
+	const maxDistance = 6.0
+	var nearbyList []NearbyDriver
 
-	var list []NearbyDriver
-
-	for _, d := range all {
-		if taxiType != "" && d.TaxiType != taxiType {
+	for _, driver := range allDrivers {
+		if taxiType != "" && driver.TaxiType != taxiType {
 			continue
 		}
 
-		dist := util.DistanceKm(lat, lon, d.Location.Latitude, d.Location.Longitude)
-		if dist <= radiusKm {
-			list = append(list, NearbyDriver{
-				FirstName:  d.FirstName,
-				LastName:   d.LastName,
-				Plate:      d.Plate,
-				DistanceKm: dist,
+		distance := util.DistanceKm(
+			lat,
+			lon,
+			driver.Location.Latitude,
+			driver.Location.Longitude,
+		)
+
+		if distance <= maxDistance {
+			nearbyList = append(nearbyList, NearbyDriver{
+				FirstName:  driver.FirstName,
+				LastName:   driver.LastName,
+				Plate:      driver.Plate,
+				DistanceKm: distance,
 			})
 		}
 	}
 
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].DistanceKm < list[j].DistanceKm
+	sort.Slice(nearbyList, func(i, j int) bool {
+		return nearbyList[i].DistanceKm < nearbyList[j].DistanceKm
 	})
 
-	return list, nil
+	return nearbyList, nil
 }

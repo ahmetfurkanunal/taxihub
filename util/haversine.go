@@ -6,7 +6,6 @@ func toRad(deg float64) float64 {
 	return deg * math.Pi / 180
 }
 
-// DistanceKm iki nokta arasındaki mesafeyi (km) döner.
 func DistanceKm(lat1, lon1, lat2, lon2 float64) float64 {
 	const earthRadius = 6371.0 // km
 

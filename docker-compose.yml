@@ -3,27 +3,27 @@ services:
     image: mongo:6
     container_name: mongo
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
-      - mongo_data:/data/db
+      - taxihub_mongo_data:/data/db
 
   driver-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: driver-service
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=mongodb://mongo:27017
+      MONGO_URI: mongodb://mongo:27017
     ports:
       - "8080:8080"
 
   gateway:
-    build: ./gateway
+    image: nginx:latest
     container_name: gateway
-    depends_on:
-      - driver-service
     ports:
       - "8000:80"
 
 volumes:
-  mongo_data:
+  taxihub_mongo_data:

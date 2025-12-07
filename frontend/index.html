@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TaxiHub Dashboard</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<h1>TaxiHub Management Panel</h1>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Create Driver</h2>
+
+        <input id="firstName" placeholder="First Name">
+        <input id="lastName" placeholder="Last Name">
+        <input id="plate" placeholder="Plate Number">
+        <input id="brand" placeholder="Car Brand">
+        <input id="model" placeholder="Car Model">
+        <input id="taxiType" placeholder="Taxi Type (yellow / turquoise / black)">
+        <input id="lat" placeholder="Latitude">
+        <input id="lon" placeholder="Longitude">
+
+        <button onclick="createDriver()">Create Driver</button>
+    </div>
+
+    <div class="card">
+        <h2>Find Nearby Drivers</h2>
+
+        <input id="centerLat" placeholder="Center Latitude">
+        <input id="centerLon" placeholder="Center Longitude">
+        <input id="filterTaxiType" placeholder="Taxi Type (optional)">
+
+        <button onclick="searchNearby()">Find Nearby Drivers (≤ 6 km)</button>
+        <button class="btn-gray" onclick="loadDrivers()">List All Drivers</button>
+    </div>
+
+</div>
+
+<h2>Result</h2>
+<pre id="output">No action yet.</pre>
+
+<h2>Driver List (Edit / Delete)</h2>
+<div id="driverList"></div>
+
+<script>
+const API_BASE = "http://localhost:8080"; 
+
+function showResult(data) {
+    const output = document.getElementById("output");
+    output.textContent = typeof data === "string"
+        ? data
+        : JSON.stringify(data, null, 2);
+}
+
+async function createDriver() {
+    const payload = {
+        firstName: firstName.value.trim(),
+        lastName: lastName.value.trim(),
+        plate: plate.value.trim(),
+        carBrand: brand.value.trim(),
+        carModel: model.value.trim(),
+        taksiType: taxiType.value.trim(),
+        lat: parseFloat(lat.value),
+        lon: parseFloat(lon.value)
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/drivers`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        showResult(data);
+        loadDrivers();
+
+    } catch (err) {
+        console.error("CREATE ERROR:", err);
+        showResult("Create error");
+    }
+}
+
+async function loadDrivers() {
+    try {
+        const res = await fetch(`${API_BASE}/drivers`);
+        const drivers = await res.json();
+
+        console.log("DRIVERS RAW DATA:", drivers);
+
+        showResult(drivers);
+
+        const list = document.getElementById("driverList");
+        list.innerHTML = "";
+
+        drivers.forEach(driver => {
+
+           
+            const lat =
+                driver.location?.latitude ??
+                driver.location?.lat ??
+                "N/A";
+
+            const lon =
+                driver.location?.longitude ??
+                driver.location?.lon ??
+                "N/A";
+
+            const taxiType =
+                driver.taksiType ??
+                driver.taxiType ??
+                "N/A";
+
+            const row = document.createElement("div");
+            row.className = "driver-row";
+
+           row.innerHTML = `
+    <div>
+        <b>${driver.firstName} ${driver.lastName}</b> — ${driver.plate}
+        <br>(${lat}, ${lon}) - ${taxiType}
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn-edit" onclick='updateDriver(${JSON.stringify(driver)})'>Edit</button>
+        <button class="btn-delete" onclick="removeDriver('${driver.id}')">Delete</button>
+    </div>
+`;
+
+
+            list.appendChild(row);
+        });
+
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+        showResult("List error");
+    }
+}
+
+
+async function removeDriver(id) {
+    if (!confirm("Delete this driver?")) return;
+
+    try {
+        await fetch(`${API_BASE}/drivers/${id}`, { method: "DELETE" });
+        showResult("Driver deleted.");
+        loadDrivers();
+    } catch {
+        showResult("Delete failed");
+    }
+}
+
+async function updateDriver(driver) {
+    const payload = {
+        firstName: prompt("First Name:", driver.firstName),
+        lastName: prompt("Last Name:", driver.lastName),
+        plate: prompt("Plate:", driver.plate),
+        carBrand: prompt("Brand:", driver.carBrand),
+        carModel: prompt("Model:", driver.carModel),
+        taksiType: prompt("Taxi Type:", driver.taksiType),
+        lat: parseFloat(prompt("Latitude:", driver.location.latitude ?? driver.location.lat)),
+        lon: parseFloat(prompt("Longitude:", driver.location.longitude ?? driver.location.lon))
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/drivers/${driver.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        showResult(data);
+        loadDrivers();
+    } catch {
+        showResult("Update failed");
+    }
+}
+
+async function searchNearby() {
+    const lat = centerLat.value;
+    const lon = centerLon.value;
+    const type = filterTaxiType.value;
+
+    const url = `${API_BASE}/drivers/nearby?lat=${lat}&lon=${lon}&taksiType=${type}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        showResult(data);
+    } catch {
+        showResult("Nearby search failed");
+    }
+}
+
+loadDrivers();
+</script>
+
+
+</body>
+</html>

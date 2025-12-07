@@ -39,13 +39,18 @@ func (r *Repository) Update(ctx context.Context, id primitive.ObjectID, d Driver
 func (r *Repository) List(ctx context.Context) ([]Driver, error) {
 	cur, err := r.Collection.Find(ctx, bson.M{})
 	if err != nil {
-		return nil, err
+		return []Driver{}, err
 	}
 
-	var list []Driver
+	list := make([]Driver, 0)
 	if err := cur.All(ctx, &list); err != nil {
-		return nil, err
+		return []Driver{}, err
 	}
 
 	return list, nil
+}
+
+func (r *Repository) DeleteByID(ctx context.Context, id primitive.ObjectID) error {
+	_, err := r.Collection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
 }
